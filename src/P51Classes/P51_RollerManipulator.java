@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.CANJaguar;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.can.CANTimeoutException;
 /**
  * Code that Drives the Manupulaor
  * 2 Motors Turning Counter clockwise to grab the ball
@@ -25,7 +26,7 @@ import edu.wpi.first.wpilibj.Solenoid;
  * Get the Roller Direction
  * Set the Rollers Speed
  * Increment the Rollers Speed up (min neutral)
- * Increment the Rollers Speed down ( min neutral)
+ * Increment the Rollers Speed down (min neutral)
  * @author Stuart
  */
 
@@ -36,16 +37,29 @@ public class P51_RollerManipulator {
 
     private boolean position; //True Lowered, False Raised
     private boolean direction; //True Forward, False Reverse
+    private boolean CANEnabled; // is CAN enabled on this Manipulator
     private double speed;
     private double speedIncrement; // increment that the roller increases by when speedUp() and speedDown() methods are called value needs to be be between 0 and 1. values smaller than .2 are best
-    private SpeedController right, left; // 
+    private SpeedController right, left;
+    private CANJaguar rightCAN, leftCAN;
+    private Jaguar rightJag, leftJag;
     private Solenoid pistons;
 
-    public P51_RollerManipulator() {
+    public P51_RollerManipulator() throws CANTimeoutException {
         this.setPosition(false);
         this.setDirection(true);
         this.setSpeed(0);
         this.setSpeedIncrement(0);
+        if (this.CANEnabled)
+        {
+            this.rightCAN = new CANJaguar(1);
+            this.right = this.rightCAN;
+        }
+        else
+        {
+            this.rightJag = new Jaguar(1);
+            this.right = this.rightCAN;  
+        }
     }
     
     /*
