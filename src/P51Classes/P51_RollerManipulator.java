@@ -8,6 +8,8 @@ package P51Classes;
 import edu.wpi.first.wpilibj.CANJaguar;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.can.CANTimeoutException;
 /**
  * Code that Drives the Manupulaor
  * 2 Motors Turning Counter clockwise to grab the ball
@@ -30,18 +32,37 @@ import edu.wpi.first.wpilibj.SpeedController;
 
 
 public class P51_RollerManipulator {
-
-    
-
-    private int position;
-    private int direction;
+   
+    private boolean position; //True Lowered, False Raised
+    private boolean direction; //True Forward, False Reverse
+    private boolean CANEnabled; // is CAN enabled on this Manipulator
     private double speed;
-    private double speedIncrement;
+    private double speedIncrement; // increment that the roller increases by when speedUp() and speedDown() methods are called value needs to be be between 0 and 1. values smaller than .2 are best
     private SpeedController right, left;
+    private CANJaguar rightCAN, leftCAN;
+    private Jaguar rightJag, leftJag;
+    private Solenoid pistons;
 
-    public P51_RollerManipulator() {
-        this.setPosition(0);
-        this.setDirection(1);
+    public P51_RollerManipulator(int rightMotorPort, int leftMotorPort, int solenoidPort, boolean CANEnabled) throws CANTimeoutException {
+        
+        this.CANEnabled = CANEnabled;
+        if (this.CANEnabled)
+        {
+            this.rightCAN = new CANJaguar(rightMotorPort);
+            this.right = this.rightCAN;
+            this.leftCAN = new CANJaguar(leftMotorPort);
+            this.left = this.leftCAN;
+        }
+        else
+        {
+            this.rightJag = new Jaguar(rightMotorPort);
+            this.right = this.rightJag;
+            this.leftJag = new Jaguar(leftMotorPort);
+            this.left = this.leftJag; 
+        }
+        this.pistons = new Solenoid(solenoidPort);
+        this.setPosition(false);
+        this.setDirection(true);
         this.setSpeed(0);
         this.setSpeedIncrement(0);
     }
@@ -52,7 +73,6 @@ public class P51_RollerManipulator {
     public void speedUp()
     {
        double temp = 0;
-       temp = this.getSpeed()+this.getDirection()*this.getSpeedIncrement();
        this.setSpeed(temp);
     }
     /*
@@ -60,23 +80,24 @@ public class P51_RollerManipulator {
     */
     public void speedDown()
     {
-        this.setSpeed(this.getSpeed()-this.getDirection()*this.getSpeedIncrement());
+        double temp = 0;
     }
-    public int getPosition() {
+    public boolean getPosition() {
         return position;
     }
 
-    public void setPosition(int position) {
+    public void setPosition(boolean position) {
         this.position = position;
+        this.pistons.set(this.position);
     }
 
-    public int getDirection() {
+    public boolean getDirection() {
         return direction;
     }
 
-    private void setDirection(int direction) {
+    private void setDirection(boolean direction) {
         this.direction = direction;
-    }
+        }
 
     public double getSpeed() {
         return speed;
@@ -86,15 +107,9 @@ public class P51_RollerManipulator {
     * Sets the direction based on positive or negitive numbers
     */
     public void setSpeed(double speed) {
-        if (speed < -1)
-            speed = -1;
-        if ( speed > 1)
-            speed = 1;
+        this.checkOutOfBounds(speed);
         this.speed = speed;
-        if (this.speed > 0)
-            this.setDirection(1);
-        if (this.speed < 0)
-            this.setDirection(-1);
+        this.setDirection(this.isPositive(speed));
         this.right.set(this.speed);
         this.left.set(-this.speed);
     }
@@ -103,14 +118,28 @@ public class P51_RollerManipulator {
         return speedIncrement;
     }
 
+    /*
+    * Set the Speed increment.
+    * protects against values inbetween 1 and 0
+    */
     public void setSpeedIncrement(double speedIncrement) {
-        if (speedIncrement < -1)
-            speedIncrement = -1;
-        if ( speedIncrement > 1)
-            speedIncrement = 1;
+        this.checkOutOfBounds(speedIncrement);
         this.speedIncrement = Math.abs(speedIncrement);
     }
-    
+    //check to see if the value is between -1 and 1 if not set to -1 or 1
+    private double checkOutOfBounds(double value)
+    {
+        if (value < -1)
+            value = -1;
+        if ( value > 1)
+            value = 1;
+        return value;
+    }
+    //check if the number is positive or negitive
+    private boolean isPositive(double number)
+    {
+        return number >= 0;
+    }
     
     
     
