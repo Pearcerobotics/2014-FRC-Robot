@@ -8,6 +8,7 @@ package P51Classes;
 import edu.wpi.first.wpilibj.CANJaguar;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.Solenoid;
 /**
  * Code that Drives the Manupulaor
  * 2 Motors Turning Counter clockwise to grab the ball
@@ -33,15 +34,16 @@ public class P51_RollerManipulator {
 
     
 
-    private int position;
-    private int direction;
+    private boolean position; //True Lowered, False Raised
+    private boolean direction; //True Forward, False Reverse
     private double speed;
-    private double speedIncrement;
-    private SpeedController right, left;
+    private double speedIncrement; // increment that the roller increases by when speedUp() and speedDown() methods are called value needs to be be between 0 and 1. values smaller than .2 are best
+    private SpeedController right, left; // 
+    private Solenoid pistons;
 
     public P51_RollerManipulator() {
-        this.setPosition(0);
-        this.setDirection(1);
+        this.setPosition(false);
+        this.setDirection(true);
         this.setSpeed(0);
         this.setSpeedIncrement(0);
     }
@@ -52,7 +54,6 @@ public class P51_RollerManipulator {
     public void speedUp()
     {
        double temp = 0;
-       temp = this.getSpeed()+this.getDirection()*this.getSpeedIncrement();
        this.setSpeed(temp);
     }
     /*
@@ -60,21 +61,22 @@ public class P51_RollerManipulator {
     */
     public void speedDown()
     {
-        this.setSpeed(this.getSpeed()-this.getDirection()*this.getSpeedIncrement());
+        double temp = 0;
     }
-    public int getPosition() {
+    public boolean getPosition() {
         return position;
     }
 
-    public void setPosition(int position) {
+    public void setPosition(boolean position) {
         this.position = position;
+        pistons.set(position);
     }
 
-    public int getDirection() {
+    public boolean getDirection() {
         return direction;
     }
 
-    private void setDirection(int direction) {
+    private void setDirection(boolean direction) {
         this.direction = direction;
     }
 
@@ -92,9 +94,9 @@ public class P51_RollerManipulator {
             speed = 1;
         this.speed = speed;
         if (this.speed > 0)
-            this.setDirection(1);
+            this.setDirection(true);
         if (this.speed < 0)
-            this.setDirection(-1);
+            this.setDirection(false);
         this.right.set(this.speed);
         this.left.set(-this.speed);
     }
@@ -103,6 +105,10 @@ public class P51_RollerManipulator {
         return speedIncrement;
     }
 
+    /*
+    * Set the Speed increment.
+    * protects against values inbetween 1 and 0
+    */
     public void setSpeedIncrement(double speedIncrement) {
         if (speedIncrement < -1)
             speedIncrement = -1;
