@@ -29,21 +29,26 @@ public class DefaultRobot extends IterativeRobot {
         final static boolean CANENABLED = true;
         //Jaguars
         //CAN IDs
-        final static int RIGHTFRONTMOTORCAN_ID = 4;
-        final static int LEFTFRONTMOTORCAN_ID = 5;
-        final static int RIGHTREARMOTORCAN_ID = 8;
-        final static int LEFTREARMOTORCAN_ID = 9;
+        final static int RIGHTFRONTMOTORCAN_ID = 3;
+        final static int LEFTFRONTMOTORCAN_ID = 4;
+        final static int RIGHTREARMOTORCAN_ID = 5;
+        final static int LEFTREARMOTORCAN_ID = 6;
+        final static int LEFTMANIPULATORCAN_ID = 7;
+        final static int RIGHTMANIPULATORCAN_ID = 8;
         //PWM IDs
         final static int RIGHTFRONTMOTORPWM_ID = 0;
         final static int LEFTFRONTMOTORPWM_ID = 1;
         final static int RIGHTREARMOTORPWM_ID = 2;
         final static int LEFTREARMOTORPWM_ID = 3;
+        final static int LEFTMANIPULATORPWM_ID = 4;
+        final static int RIGHTMANIPULATORPWM_ID = 5;
         //Victors
         //details the port that each victor is attached to on the relay modual
         final static int COMPRESSORVICTOR_ID = 0;
-        //Colinoids
+        //Solinoids
         //details the port on the relay module that each sulonid is connected
         final static int LAUNCHERSOLINOID_ID = 0;
+        final static int MANIPULATORSOLINOID_ID = 1;
         //DIO
         final static int PNUMATICPRESSURESENSOR = 0;
         final static int FRONTSONICSENSOR = 1;
@@ -151,7 +156,7 @@ public class DefaultRobot extends IterativeRobot {
 	}
 
 	// Set drive mode to uninitialized
-	m_driveMode = UNINITIALIZED_DRIVE;
+	m_driveMode = TANK_DRIVE;
 	// Initialize counters to record the number of loops completed in autonomous and teleop modes
 	m_autoPeriodicLoops = 0;
 	m_disabledPeriodicLoops = 0;
@@ -182,7 +187,7 @@ public class DefaultRobot extends IterativeRobot {
 	public void teleopInit() {
 		m_telePeriodicLoops = 0;				// Reset the loop counter for teleop mode
 		m_dsPacketsReceivedInCurrentSecond = 0;	// Reset the number of dsPackets in current second
-		m_driveMode = UNINITIALIZED_DRIVE;		// Set drive mode to uninitialized
+		m_driveMode = TANK_DRIVE;		// Set drive mode to uninitialized
 	}
 
 	/********************************** Periodic Routines *************************************/
@@ -238,38 +243,9 @@ public class DefaultRobot extends IterativeRobot {
          * from the DS should go in here
          */
 
-        m_dsPacketsReceivedInCurrentSecond++;					// increment DS packets received
-
-        // put Driver Station-dependent code here
-
-        // Demonstrate the use of the Joystick buttons
-
-        Solenoid[] firstGroup = new Solenoid[4];
-        Solenoid[] secondGroup = new Solenoid[4];
-        for (int i = 0; i < 4; i++) {
-            firstGroup[i] = m_solenoids[i];
-            secondGroup[i] = m_solenoids[i + 4];
-        }
-
-
-        // determine if tank or arcade mode, based upon position of "Z" wheel on kit joystick
-        if (m_rightStick.getZ() <= 0) {    // Logitech Attack3 has z-polarity reversed; up is negative
-            // use arcade drive
-            m_robotDrive.arcadeDrive(m_rightStick, false);			// drive with arcade style (use right stick)
-            if (m_driveMode != ARCADE_DRIVE) {
-                // if newly entered arcade drive, print out a message
-                System.out.println("Arcade Drive\n");
-                m_driveMode = ARCADE_DRIVE;
-            }
-        } else {
-            // use tank drive
-            m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
-            if (m_driveMode != TANK_DRIVE) {
-                // if newly entered tank drive, print out a message
-                System.out.println("Tank Drive\n");
-                m_driveMode = TANK_DRIVE;
-            }
-        }
+        m_dsPacketsReceivedInCurrentSecond++;           	// increment DS packets received
+        m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
+        
     }
 
 	
