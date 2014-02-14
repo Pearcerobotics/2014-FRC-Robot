@@ -29,10 +29,10 @@ public class DefaultRobot extends IterativeRobot {
         final static boolean CANENABLED = true;
         //Jaguars
         //CAN IDs
-        final static int RIGHTFRONTMOTORCAN_ID = 4;
-        final static int LEFTFRONTMOTORCAN_ID = 5;
-        final static int RIGHTREARMOTORCAN_ID = 8;
-        final static int LEFTREARMOTORCAN_ID = 9;
+        final static int RIGHTFRONTMOTORCAN_ID = 5;
+        final static int LEFTFRONTMOTORCAN_ID = 6;
+        final static int RIGHTREARMOTORCAN_ID = 7;
+        final static int LEFTREARMOTORCAN_ID = 8;
         //PWM IDs
         final static int RIGHTFRONTMOTORPWM_ID = 0;
         final static int LEFTFRONTMOTORPWM_ID = 1;
@@ -107,15 +107,37 @@ public class DefaultRobot extends IterativeRobot {
         //ASSIGN CAN/PWM IDS BASED ON WEATHER CAN IS ENABLED ON THE ROBOT. 
         if (CANENABLED)
         {
+            
+            //try catch loop all the things ( because we want to know where the can cable is unplugged)
             System.out.println("CAN Enabled\n");
             try {
-                m_rightFrontMotor = new CANJaguar(RIGHTFRONTMOTORCAN_ID);
-                m_rightBackMotor = new CANJaguar(RIGHTREARMOTORCAN_ID);
-                m_leftFrontMotor = new CANJaguar(LEFTFRONTMOTORCAN_ID);
-                m_leftBackMotor = new CANJaguar(LEFTREARMOTORCAN_ID);
-            } catch (CANTimeoutException ex) {
-               System.out.println("CAN TIMEOUT EXCEPTION!\n");
-            }
+                    m_rightFrontMotor = new CANJaguar(RIGHTFRONTMOTORCAN_ID);
+                } 
+            catch (CANTimeoutException ex) 
+                {
+                    System.out.println("CAN TIMEOUT EXCEPTION ID:"+ RIGHTFRONTMOTORCAN_ID +"\n");
+                }
+            try {
+                    m_rightBackMotor = new CANJaguar(RIGHTREARMOTORCAN_ID);
+                } 
+            catch (CANTimeoutException ex) 
+                {
+                    System.out.println("CAN TIMEOUT EXCEPTION ID:"+ RIGHTREARMOTORCAN_ID +"\n");
+                }
+            try {
+                    m_leftFrontMotor = new CANJaguar(LEFTFRONTMOTORCAN_ID);
+                } 
+            catch (CANTimeoutException ex) 
+                {
+                    System.out.println("CAN TIMEOUT EXCEPTION ID:"+ LEFTFRONTMOTORCAN_ID +"\n");
+                }
+            try {
+                    m_leftBackMotor = new CANJaguar(LEFTREARMOTORCAN_ID);
+                } 
+            catch (CANTimeoutException ex) 
+                {
+                    System.out.println("CAN TIMEOUT EXCEPTION ID:"+ LEFTREARMOTORCAN_ID +"\n");
+                }
         }
         else
         {
@@ -128,7 +150,10 @@ public class DefaultRobot extends IterativeRobot {
         // Create a robot using standard right/left robot drive on 
 	m_robotDrive = new RobotDrive(m_leftFrontMotor, m_leftBackMotor, 
                                       m_rightFrontMotor, m_rightBackMotor);
-
+        m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kFrontLeft, true);
+        m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kFrontRight, true);
+        m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
+        m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearRight, true);
 	m_dsPacketsReceivedInCurrentSecond = 0;
 
         // Define joysticks being used at USB port #1 and USB port #2 on the Drivers Station
@@ -253,22 +278,14 @@ public class DefaultRobot extends IterativeRobot {
 
 
         // determine if tank or arcade mode, based upon position of "Z" wheel on kit joystick
-        if (m_rightStick.getZ() <= 0) {    // Logitech Attack3 has z-polarity reversed; up is negative
-            // use arcade drive
-            m_robotDrive.arcadeDrive(m_rightStick, false);			// drive with arcade style (use right stick)
-            if (m_driveMode != ARCADE_DRIVE) {
-                // if newly entered arcade drive, print out a message
-                System.out.println("Arcade Drive\n");
-                m_driveMode = ARCADE_DRIVE;
-            }
-        } else {
+        
             // use tank drive
             m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
             if (m_driveMode != TANK_DRIVE) {
                 // if newly entered tank drive, print out a message
                 System.out.println("Tank Drive\n");
                 m_driveMode = TANK_DRIVE;
-            }
+            
         }
     }
 
