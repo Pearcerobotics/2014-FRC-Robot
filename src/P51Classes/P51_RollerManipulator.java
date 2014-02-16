@@ -45,21 +45,27 @@ public class P51_RollerManipulator {
     private Jaguar rightJag, leftJag;
     private Solenoid pistons;
 
-    public P51_RollerManipulator() throws CANTimeoutException {
+    public P51_RollerManipulator(int rightMotorPort, int leftMotorPort, int solenoidPort, boolean CANEnabled) throws CANTimeoutException {
+        
+        this.CANEnabled = CANEnabled;
+        if (this.CANEnabled)
+        {
+            this.rightCAN = new CANJaguar(rightMotorPort);
+            this.right = this.rightCAN;
+            this.leftCAN = new CANJaguar(leftMotorPort);
+            this.left = this.leftCAN;
+        }
+        else
+        {
+            this.rightJag = new Jaguar(rightMotorPort);
+            this.right = this.rightJag;
+            this.leftJag = new Jaguar(leftMotorPort);
+            this.left = this.leftJag; 
+        }
         this.setPosition(false);
         this.setDirection(true);
         this.setSpeed(0);
         this.setSpeedIncrement(0);
-        if (this.CANEnabled)
-        {
-            this.rightCAN = new CANJaguar(1);
-            this.right = this.rightCAN;
-        }
-        else
-        {
-            this.rightJag = new Jaguar(1);
-            this.right = this.rightCAN;  
-        }
     }
     
     /*
