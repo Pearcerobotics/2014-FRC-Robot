@@ -41,8 +41,8 @@ public class DefaultRobot extends IterativeRobot {
         //Victors
         //details the port that each victor is attached to on the relay modual
         final static int COMPRESSORVICTOR_ID = 0;
-        //Colinoids
-        //details the port on the relay module that each sulonid is connected
+        //SOLINOIDS
+        //details the port on the relay module that each solonoid is connected
         final static int LAUNCHERSOLINOID_ID = 0;
         //DIO
         final static int PNUMATICPRESSURESENSOR = 0;
@@ -62,30 +62,13 @@ public class DefaultRobot extends IterativeRobot {
         // Declare variable for the robot drive system
 	RobotDrive m_robotDrive;		// robot will use Can Devices 1 2 3 and 4 for drive motors
         SpeedController m_rightFrontMotor, m_rightBackMotor,
-                  m_leftFrontMotor, m_leftBackMotor;
-        
-
-        
-      
+                        m_leftFrontMotor, m_leftBackMotor;
+             
 	int m_dsPacketsReceivedInCurrentSecond;	// keep track of the ds packets received in the current second
         
 	// Declare variables for the two joysticks being used
 	Joystick m_rightStick;			// joystick 1 (arcade stick or right tank stick)
-	Joystick m_leftStick;			// joystick 2 (tank left stick)
-
-	static final int NUM_JOYSTICK_BUTTONS = 16;
-	boolean[] m_rightStickButtonState = new boolean[(NUM_JOYSTICK_BUTTONS+1)];
-	boolean[] m_leftStickButtonState = new boolean[(NUM_JOYSTICK_BUTTONS+1)];
-
-	// Declare variables for each of the eight solenoid outputs
-	static final int NUM_SOLENOIDS = 8;
-	Solenoid[] m_solenoids = new Solenoid[NUM_SOLENOIDS];
-
-	// drive mode selection
-	static final int UNINITIALIZED_DRIVE = 0;
-	static final int ARCADE_DRIVE = 1;
-	static final int TANK_DRIVE = 2;
-	int m_driveMode;
+	Joystick m_leftStick;			// joystick 2 (tank left stick)	
 
 	// Local variables to count the number of periodic loops performed
 	int m_autoPeriodicLoops;
@@ -101,13 +84,10 @@ public class DefaultRobot extends IterativeRobot {
      */
     public DefaultRobot() {
         System.out.println("BuiltinDefaultCode Constructor Started\n");
-            
-        //declaring CAN Jaguar Variable
-        
+                 
         //ASSIGN CAN/PWM IDS BASED ON WEATHER CAN IS ENABLED ON THE ROBOT. 
         if (CANENABLED)
         {
-            
             //try catch loop all the things ( because we want to know where the can cable is unplugged)
             System.out.println("CAN Enabled\n");
             try {
@@ -139,7 +119,7 @@ public class DefaultRobot extends IterativeRobot {
                     System.out.println("CAN TIMEOUT EXCEPTION ID:"+ LEFTREARMOTORCAN_ID +"\n");
                 }
         }
-        else
+        else // if CAN is not enabled Declare all the Jags with PWMs
         {
              System.out.println("PWM enabled\n");
              m_rightFrontMotor = new Jaguar(RIGHTFRONTMOTORPWM_ID);
@@ -150,41 +130,24 @@ public class DefaultRobot extends IterativeRobot {
         // Create a robot using standard right/left robot drive on 
 	m_robotDrive = new RobotDrive(m_leftFrontMotor, m_leftBackMotor, 
                                       m_rightFrontMotor, m_rightBackMotor);
+        //invert all the motors (our electrical set up)
         m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kFrontLeft, true);
         m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kFrontRight, true);
         m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
         m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kRearRight, true);
-	m_dsPacketsReceivedInCurrentSecond = 0;
+	
+        m_dsPacketsReceivedInCurrentSecond = 0;
 
         // Define joysticks being used at USB port #1 and USB port #2 on the Drivers Station
 	m_rightStick = new Joystick(1);
 	m_leftStick = new Joystick(2);
-                
-                
-
-	// Iterate over all the buttons on each joystick, setting state to false for each
-	int buttonNum = 1;						// start counting buttons at button 1
-	for (buttonNum = 1; buttonNum <= NUM_JOYSTICK_BUTTONS; buttonNum++) {
-		m_rightStickButtonState[buttonNum] = false;
-		m_leftStickButtonState[buttonNum] = false;
-	}
-
-	// Iterate over all the solenoids on the robot, constructing each in turn
-	int solenoidNum = 1;						// start counting solenoids at solenoid 1
-	for (solenoidNum = 0; solenoidNum < NUM_SOLENOIDS; solenoidNum++) {
-		m_solenoids[solenoidNum] = new Solenoid(solenoidNum + 1);
-	}
-
-	// Set drive mode to uninitialized
-	m_driveMode = UNINITIALIZED_DRIVE;
+        
 	// Initialize counters to record the number of loops completed in autonomous and teleop modes
 	m_autoPeriodicLoops = 0;
 	m_disabledPeriodicLoops = 0;
 	m_telePeriodicLoops = 0;
 	System.out.println("BuiltinDefaultCode Constructor Completed\n");
 }
-
-
 	/********************************** Init Routines *************************************/
 
 	public void robotInit() {
@@ -207,7 +170,6 @@ public class DefaultRobot extends IterativeRobot {
 	public void teleopInit() {
 		m_telePeriodicLoops = 0;				// Reset the loop counter for teleop mode
 		m_dsPacketsReceivedInCurrentSecond = 0;	// Reset the number of dsPackets in current second
-		m_driveMode = UNINITIALIZED_DRIVE;		// Set drive mode to uninitialized
 	}
 
 	/********************************** Periodic Routines *************************************/
@@ -266,27 +228,8 @@ public class DefaultRobot extends IterativeRobot {
         m_dsPacketsReceivedInCurrentSecond++;					// increment DS packets received
 
         // put Driver Station-dependent code here
-
-        // Demonstrate the use of the Joystick buttons
-
-        Solenoid[] firstGroup = new Solenoid[4];
-        Solenoid[] secondGroup = new Solenoid[4];
-        for (int i = 0; i < 4; i++) {
-            firstGroup[i] = m_solenoids[i];
-            secondGroup[i] = m_solenoids[i + 4];
-        }
-
-
-        // determine if tank or arcade mode, based upon position of "Z" wheel on kit joystick
-        
-            // use tank drive
-            m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
-            if (m_driveMode != TANK_DRIVE) {
-                // if newly entered tank drive, print out a message
-                System.out.println("Tank Drive\n");
-                m_driveMode = TANK_DRIVE;
-            
-        }
+        m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
+           
     }
 
 	
