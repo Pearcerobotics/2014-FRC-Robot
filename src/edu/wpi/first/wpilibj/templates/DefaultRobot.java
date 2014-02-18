@@ -21,6 +21,10 @@ import edu.wpi.first.wpilibj.can.CANTimeoutException;
 import edu.wpi.first.wpilibj.Gyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.camera.AxisCamera;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.Relay;
+import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.buttons.JoystickButton;
 /**
  * Default 1745 Robot.
  */
@@ -40,14 +44,15 @@ public class DefaultRobot extends IterativeRobot {
         final static int LEFTREARMOTORPWM_ID = 3;
         //Victors
         //details the port that each victor is attached to on the relay modual
-        final static int COMPRESSORVICTOR_ID = 0;
+        final static int COMPRESSORVICTOR_ID = 1;
+        final static int LEDSVICTOR_ID = 2;
         //SOLINOIDS
         //details the port on the relay module that each solonoid is connected
-        final static int LAUNCHERSOLINOID_ID = 0;
+        final static int LAUNCHERSOLINOID_ID = 1;
         //DIO
-        final static int PNUMATICPRESSURESENSOR = 0;
-        final static int FRONTSONICSENSOR = 1;
-        final static int REARSONICSENSOR = 2;
+        final static int PNUMATICPRESSURESENSOR = 1;
+        final static int FRONTSONICSENSOR = 2;
+        final static int REARSONICSENSOR = 3;
         
         //AIO
         //JOYSTICKS
@@ -63,6 +68,9 @@ public class DefaultRobot extends IterativeRobot {
 	RobotDrive m_robotDrive;		// robot will use Can Devices 1 2 3 and 4 for drive motors
         SpeedController m_rightFrontMotor, m_rightBackMotor,
                         m_leftFrontMotor, m_leftBackMotor;
+        Compressor m_Compressor;
+        Solenoid launcherSolenoid;
+        Victor LEDVictor;
              
 	int m_dsPacketsReceivedInCurrentSecond;	// keep track of the ds packets received in the current second
         
@@ -130,6 +138,10 @@ public class DefaultRobot extends IterativeRobot {
         // Create a robot using standard right/left robot drive on 
 	m_robotDrive = new RobotDrive(m_leftFrontMotor, m_leftBackMotor, 
                                       m_rightFrontMotor, m_rightBackMotor);
+        m_Compressor = new Compressor(PNUMATICPRESSURESENSOR,COMPRESSORVICTOR_ID);
+        launcherSolenoid= new Solenoid(LAUNCHERSOLINOID_ID);
+        LEDVictor = new Victor(LEDSVICTOR_ID);
+        
         //invert all the motors (our electrical set up)
         m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kFrontLeft, true);
         m_robotDrive.setInvertedMotor(RobotDrive.MotorType.kFrontRight, true);
@@ -188,8 +200,22 @@ public class DefaultRobot extends IterativeRobot {
 			System.out.println("Disabled seconds: " + (printSec - startSec));
 			printSec++;
 		}
+               m_Compressor.start();
+               checkCompressor();
+               
 	}
-
+        private void checkCompressor()
+        {
+            if(m_Compressor.getPressureSwitchValue())
+               {
+                   m_Compressor.setRelayValue(Relay.Value.kOn);
+               }
+               else
+               {
+                   m_Compressor.setRelayValue(Relay.Value.kOff);
+               }
+        }
+        
 	public void autonomousPeriodic() {
 		// feed the user watchdog at every period when in autonomous
 		Watchdog.getInstance().feed();
@@ -200,7 +226,9 @@ public class DefaultRobot extends IterativeRobot {
 		 * robot in autonomous mode, but is not enabled in the default code in order
 		 * to prevent an unsuspecting team from having their robot drive autonomously!
 		 */
+                checkCompressor();
 		/* below code commented out for safety
+                 * 
 		if (m_autoPeriodicLoops == 1) {
 			// When on the first periodic loop in autonomous mode, start driving forwards at half speed
 			m_robotDrive->Drive(0.5, 0.0);			// drive forwards at half speed
@@ -229,7 +257,8 @@ public class DefaultRobot extends IterativeRobot {
 
         // put Driver Station-dependent code here
         m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
-           
+        checkCompressor(); //turn the compressor on and off
+        launcherSolenoid.set(m_leftStick.getButton(Joystick.ButtonType.kTrigger));
     }
 
 	
