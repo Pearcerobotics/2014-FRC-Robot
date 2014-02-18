@@ -167,6 +167,7 @@ public class DefaultRobot extends IterativeRobot {
 		// robot would be put here.
 
 		System.out.println("RobotInit() completed.\n");
+                m_Compressor.start();
 	}
 
 	public void disabledInit() {
@@ -198,15 +199,17 @@ public class DefaultRobot extends IterativeRobot {
 		// while disabled, printout the duration of current disabled mode in seconds
 		if ((Timer.getUsClock() / 1000000.0) > printSec) {
 			System.out.println("Disabled seconds: " + (printSec - startSec));
+                        System.out.println("Pressure Switch: " + m_Compressor.getPressureSwitchValue());
+                        System.out.println("Compressor enabled?: " + m_Compressor.enabled());
 			printSec++;
 		}
-               m_Compressor.start();
+               
                checkCompressor();
                
 	}
         private void checkCompressor()
         {
-            if(m_Compressor.getPressureSwitchValue())
+            if(!m_Compressor.getPressureSwitchValue())
                {
                    m_Compressor.setRelayValue(Relay.Value.kOn);
                }
@@ -227,6 +230,7 @@ public class DefaultRobot extends IterativeRobot {
 		 * to prevent an unsuspecting team from having their robot drive autonomously!
 		 */
                 checkCompressor();
+                //@todo write Autocode
 		/* below code commented out for safety
                  * 
 		if (m_autoPeriodicLoops == 1) {
@@ -246,20 +250,20 @@ public class DefaultRobot extends IterativeRobot {
 
         // increment the number of teleop periodic loops completed
         m_telePeriodicLoops++;
-
-        /*
-         * Code placed in here will be called only when a new packet of information
-         * has been received by the Driver Station.  Any code which needs new information
-         * from the DS should go in here
-         */
-
         m_dsPacketsReceivedInCurrentSecond++;					// increment DS packets received
 
         // put Driver Station-dependent code here
         m_robotDrive.tankDrive(m_leftStick, m_rightStick);	// drive with tank style
         checkCompressor(); //turn the compressor on and off
-        launcherSolenoid.set(m_leftStick.getButton(Joystick.ButtonType.kTrigger));
-    }
+        
+        //actuate the launcher.
+        if(launcherSolenoid.get() != m_rightStick.getButton(Joystick.ButtonType.kTrigger))
+        {
+            System.out.println(launcherSolenoid.get());
+            launcherSolenoid.set(m_rightStick.getButton(Joystick.ButtonType.kTrigger));
+        }
+        //@todo add eltoro code
+        }
 
 	
 
